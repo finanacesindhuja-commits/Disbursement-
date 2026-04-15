@@ -33,9 +33,9 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json({ limit: '50mb' }));
-const staticPath = path.join(__dirname, '../frontend/dist');
-console.log('Serving static files from:', staticPath);
-app.use(express.static(staticPath));
+// staticPath disabled for split deployment (Frontend on Vercel)
+// const staticPath = path.join(__dirname, '../frontend/dist');
+// app.use(express.static(staticPath));
 
 // Supabase Configuration
 const supabaseUrl = process.env.SUPABASE_URL?.trim();
@@ -202,7 +202,13 @@ app.post('/api/credit', async (req, res) => {
 
 // ----------------------------------------
 
-// Serve frontend index.html for all other routes
+// Root route for Render health check
+app.get('/', (req, res) => {
+  res.json({ status: 'OK', message: 'Disbursement Backend is live!' });
+});
+
+// Serve frontend index.html for all other routes - DISABLED for split deployment
+/*
 app.get('*', (req, res) => {
   const filePath = path.join(__dirname, '../frontend/dist/index.html');
   console.log(`[GET] ${req.url} -> serving ${filePath}`);
@@ -213,6 +219,7 @@ app.get('*', (req, res) => {
     }
   });
 });
+*/
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Disbursement Backend running on http://localhost:${PORT}`);
