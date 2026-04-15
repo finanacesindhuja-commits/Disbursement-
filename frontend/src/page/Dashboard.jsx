@@ -39,7 +39,7 @@ const Dashboard = () => {
   const [lightboxImage, setLightboxImage] = useState(null);
 
   const navigate = useNavigate();
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5008';
+  const apiUrl = import.meta.env.VITE_API_URL || 'https://disbursement-4z0v.onrender.com';
 
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
