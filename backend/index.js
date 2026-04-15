@@ -63,7 +63,7 @@ app.post('/api/login', async (req, res) => {
       .from('staff')
       .select('*')
       .ilike('staff_id', staffId)
-      .eq('password', password)
+      .ilike('password', password)
       .single();
 
     if (error || !staff) {
@@ -113,7 +113,7 @@ app.get('/api/queue', async (req, res) => {
     let query = supabase
       .from('loans')
       .select('*, members(member_no)')
-      .eq('status', 'SANCTIONED');
+      .ilike('status', 'SANCTIONED');
 
     // Combine filters to ensure valid PostgREST query
     if (search) {
@@ -150,7 +150,7 @@ app.get('/api/history', async (req, res) => {
     let query = supabase
       .from('loans')
       .select('*, members(member_no)')
-      .eq('disbursement_status', 'CREDITED');
+      .ilike('disbursement_status', 'CREDITED');
 
     if (search) {
       query = query.or(`member_name.ilike.%${search}%,center_name.ilike.%${search}%`);
