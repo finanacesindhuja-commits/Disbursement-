@@ -7,27 +7,14 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 5008;
 
-const allowedOrigins = [
-  process.env.ALLOWED_ORIGIN,
-  'http://localhost:5173',
-  'http://localhost:5008'
-].filter(Boolean);
+// Log all incoming requests to help debug web connectivity
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} - Origin: ${req.headers.origin || 'None'}`);
+  next();
+});
 
 app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) !== -1 || allowedOrigins.includes('*')) {
-      callback(null, true);
-    } else {
-      // In production, you might want to be stricter, but for now we allow if ALLOWED_ORIGIN is not set
-      if (process.env.NODE_ENV !== 'production' || !process.env.ALLOWED_ORIGIN) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    }
-  },
+  origin: true, // Allow all origins to fix "doesn't work on web" immediately
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
