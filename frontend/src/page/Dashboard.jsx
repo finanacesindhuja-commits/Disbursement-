@@ -19,7 +19,10 @@ import {
   ShieldCheck,
   ChevronRight,
   AlertTriangle,
-  Loader2
+  Loader2,
+  ArrowLeft,
+  Building2,
+  Users
 } from 'lucide-react';
 
 const Dashboard = () => {
@@ -29,6 +32,7 @@ const Dashboard = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [selectedCenter, setSelectedCenter] = useState(null); // Drill-down state
   
   // Modal state
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -74,6 +78,16 @@ const Dashboard = () => {
     if (user) fetchData();
   }, [fetchData, user]);
 
+  // Reset drill-down when tab changes
+  useEffect(() => {
+    setSelectedCenter(null);
+  }, [activeTab]);
+
+  // Handle back button
+  const handleBackToCenters = () => {
+    setSelectedCenter(null);
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('user');
     navigate('/login');
@@ -114,6 +128,29 @@ const Dashboard = () => {
       setSelectedLoan(null);
     }
   };
+
+  // Group data by center for the overview
+  const groupedCenters = data.reduce((acc, item) => {
+    const centerId = item.center_id;
+    if (!acc[centerId]) {
+      acc[centerId] = {
+        center_id: centerId,
+        center_name: item.center_name,
+        count: 0,
+        total_amount: 0,
+        members: []
+      };
+    }
+    acc[centerId].count += 1;
+    acc[centerId].total_amount += (item.amount_sanctioned || 0);
+    acc[centerId].members.push(item);
+    return acc;
+  }, {});
+
+  const centers = Object.values(groupedCenters);
+  const filteredMembers = selectedCenter 
+    ? data.filter(item => item.center_id === selectedCenter)
+    : [];
 
   if (!user) return null;
 
@@ -221,8 +258,8 @@ const Dashboard = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard label="Total in Queue" value={activeTab === 'queue' ? data.length : '...'} icon={Layers} color="text-blue-400" />
             <StatCard label="Direct Credits" value={activeTab === 'history' ? data.length : '...'} icon={Banknote} color="text-emerald-400" />
+            <StatCard label="Active Centers" value={loading ? '...' : [...new Set(data.map(i => i.center_id))].length} icon={Building2} color="text-amber-400" />
             <StatCard label="System Status" value="ACTIVE" icon={ShieldCheck} color="text-emerald-400" isStatus={true} />
-            <StatCard label="Server Time" value={new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} icon={Calendar} color="text-purple-400" />
           </div>
 
           {/* Search Bar */}
@@ -238,99 +275,131 @@ const Dashboard = () => {
           </div>
 
           {/* Table Content */}
-          <div className="glass-card rounded-2xl overflow-hidden animate-fade-in" style={{ animationDelay: '0.1s' }}>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="bg-slate-800/50 border-b border-white/5 font-bold text-slate-500 text-[10px] uppercase tracking-widest">
-                    <th className="px-6 py-5">Center Details</th>
-                    <th className="px-6 py-5">Member Information</th>
-                    <th className="px-6 py-5">Sanctioned Amount</th>
-                    <th className="px-6 py-5">Current Status</th>
-                    <th className="px-6 py-5 text-right">Operation</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {loading ? (
-                    <LoadingRows />
-                  ) : data.length === 0 ? (
-                    <EmptyRow message={activeTab === 'queue' ? "No pending disbursements found." : "No credit history found."} />
-                  ) : (
-                    data.map((item, idx) => (
-                      <tr key={item.id} className="group hover:bg-white/5 transition-all">
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform">
-                              <LayoutDashboard size={14} />
-                            </div>
-                            <div>
-                              <p className="text-white font-black text-base tracking-tight uppercase leading-none mb-1">{item.center_name}</p>
-                              <p className="text-[10px] text-blue-500 font-bold tracking-widest uppercase">Center ID: #{item.center_id}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-4">
-                            {item.passbook_image_url ? (
-                              <img 
-                                src={item.passbook_image_url} 
-                                alt="Passbook" 
-                                className="w-12 h-12 rounded-lg object-cover cursor-zoom-in border border-white/10 hover:border-blue-500/50 transition-all shadow-lg"
-                                onClick={() => setLightboxImage(item.passbook_image_url)}
-                              />
-                            ) : (
-                              <div className="w-12 h-12 rounded-lg bg-slate-800 flex items-center justify-center text-slate-600 border border-dashed border-slate-700">
-                                <CreditCard size={20} />
-                              </div>
-                            )}
-                            <div>
-                              <p className="text-white font-black text-base uppercase tracking-tight leading-none mb-1">{item.member_name}</p>
-                              <p className="text-[10px] text-emerald-500 font-bold tracking-widest uppercase">LN Number: {item.members?.member_no || 'N/A'}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-1.5">
-                            <Banknote size={14} className="text-emerald-500" />
-                            <span className="text-white font-black text-lg font-mono">₹{item.amount_sanctioned?.toLocaleString()}</span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-xs font-bold">
-                          {activeTab === 'queue' ? (
-                            <span className="px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20 shadow-sm animate-pulse-subtle">
-                              SANCTIONED
-                            </span>
-                          ) : (
-                            <div className="space-y-1">
-                              <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-sm">
-                                CREDITED
-                              </span>
-                              <p className="text-[10px] text-slate-500 font-normal ml-1">
-                                {new Date(item.credited_at).toLocaleDateString()}
-                              </p>
-                            </div>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          {activeTab === 'queue' ? (
-                            <button 
-                              onClick={() => openConfirmModal(item)}
-                              className="btn-primary px-4 py-2 text-xs flex items-center gap-2 group-hover:px-6 transition-all"
-                            >
-                              Confirm Credit <ChevronRight size={14} />
-                            </button>
-                          ) : (
-                            <button className="p-2 hover:bg-white/5 rounded-lg text-slate-500 transition-colors">
-                              <MoreVertical size={18} />
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+          <div className="min-h-[400px]">
+            {loading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3, 4, 5, 6].map(i => <LoadingCard key={i} />)}
+              </div>
+            ) : selectedCenter === null ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in">
+                {centers.length === 0 ? (
+                  <div className="col-span-full py-20 bg-slate-900/40 rounded-3xl border border-dashed border-white/5 flex flex-col items-center justify-center text-slate-500">
+                    <Building2 size={48} className="mb-4 opacity-20" />
+                    <p className="text-lg font-bold">No Centers Found</p>
+                    <p className="text-sm">Try searching for a different name or ID</p>
+                  </div>
+                ) : (
+                  centers.map((center) => (
+                    <CenterCard 
+                      key={center.center_id} 
+                      center={center} 
+                      onClick={() => setSelectedCenter(center.center_id)} 
+                    />
+                  ))
+                )}
+              </div>
+            ) : (
+              <div className="space-y-6 animate-fade-in">
+                <div className="flex items-center justify-between">
+                  <button 
+                    onClick={handleBackToCenters}
+                    className="flex items-center gap-2 text-slate-400 hover:text-white transition-all hover:-translate-x-1 group"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center border border-white/5 group-hover:border-blue-500/50">
+                      <ArrowLeft size={16} />
+                    </div>
+                    <span className="text-sm font-bold uppercase tracking-wider">Back to Centers</span>
+                  </button>
+                  
+                  <div className="flex items-center gap-3 px-4 py-2 bg-blue-600/10 rounded-xl border border-blue-500/20">
+                    <Building2 size={16} className="text-blue-400" />
+                    <span className="text-white font-bold">{groupedCenters[selectedCenter]?.center_name}</span>
+                    <span className="text-slate-600 font-mono text-xs">#{selectedCenter}</span>
+                  </div>
+                </div>
+
+                <div className="glass-card rounded-2xl overflow-hidden shadow-2xl">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                      <thead>
+                        <tr className="bg-slate-800/30 border-b border-white/5 font-bold text-slate-500 text-[10px] uppercase tracking-widest">
+                          <th className="px-6 py-5">Member Information</th>
+                          <th className="px-6 py-5">Sanctioned Amount</th>
+                          <th className="px-6 py-5">Current Status</th>
+                          <th className="px-6 py-5 text-right">Operation</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/5">
+                        {filteredMembers.length === 0 ? (
+                          <EmptyRow message="No members found in this center." />
+                        ) : (
+                          filteredMembers.map((item) => (
+                            <tr key={item.id} className="group hover:bg-white/5 transition-all">
+                              <td className="px-6 py-4">
+                                <div className="flex items-center gap-4">
+                                  {item.passbook_image_url ? (
+                                    <img 
+                                      src={item.passbook_image_url} 
+                                      alt="Passbook" 
+                                      className="w-12 h-12 rounded-lg object-cover cursor-zoom-in border border-white/10 hover:border-blue-500/50 transition-all shadow-lg"
+                                      onClick={() => setLightboxImage(item.passbook_image_url)}
+                                    />
+                                  ) : (
+                                    <div className="w-12 h-12 rounded-lg bg-slate-800 flex items-center justify-center text-slate-600 border border-dashed border-slate-700">
+                                      <CreditCard size={20} />
+                                    </div>
+                                  )}
+                                  <div>
+                                    <p className="text-white font-black text-base uppercase tracking-tight leading-none mb-1">{item.member_name}</p>
+                                    <p className="text-[10px] text-emerald-500 font-bold tracking-widest uppercase">LN Number: {item.members?.member_no || 'N/A'}</p>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="flex items-center gap-1.5">
+                                  <Banknote size={14} className="text-emerald-500" />
+                                  <span className="text-white font-black text-lg font-mono">₹{item.amount_sanctioned?.toLocaleString()}</span>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 text-xs font-bold">
+                                {activeTab === 'queue' ? (
+                                  <span className="px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20 shadow-sm animate-pulse-subtle">
+                                    SANCTIONED
+                                  </span>
+                                ) : (
+                                  <div className="space-y-1">
+                                    <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-sm">
+                                      CREDITED
+                                    </span>
+                                    <p className="text-[10px] text-slate-500 font-normal ml-1">
+                                      {new Date(item.credited_at).toLocaleDateString()}
+                                    </p>
+                                  </div>
+                                )}
+                              </td>
+                              <td className="px-6 py-4 text-right">
+                                {activeTab === 'queue' ? (
+                                  <button 
+                                    onClick={() => openConfirmModal(item)}
+                                    className="btn-primary px-4 py-2 text-xs flex items-center gap-2 group-hover:px-6 transition-all"
+                                  >
+                                    Confirm Credit <ChevronRight size={14} />
+                                  </button>
+                                ) : (
+                                  <button className="p-2 hover:bg-white/5 rounded-lg text-slate-500 transition-colors">
+                                    <MoreVertical size={18} />
+                                  </button>
+                                )}
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </main>
@@ -420,6 +489,67 @@ const Dashboard = () => {
     </div>
   );
 };
+
+function CenterCard({ center, onClick }) {
+  return (
+    <button 
+      onClick={onClick}
+      className="glass-card p-6 rounded-3xl border border-white/5 group hover:border-blue-500/50 transition-all text-left flex flex-col h-full relative overflow-hidden"
+    >
+      {/* Decorative background element */}
+      <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-blue-500/10 transition-colors"></div>
+      
+      <div className="flex justify-between items-start mb-6 relative z-10">
+        <div className="w-12 h-12 rounded-2xl bg-slate-800 flex items-center justify-center text-blue-400 group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300 shadow-xl">
+          <Building2 size={24} />
+        </div>
+        <div className="text-right">
+          <p className="text-[10px] text-slate-500 font-black tracking-widest uppercase mb-1">Center ID</p>
+          <p className="text-xs font-mono text-white bg-white/5 px-2 py-1 rounded-md border border-white/5">#{center.center_id}</p>
+        </div>
+      </div>
+
+      <h3 className="text-xl font-black text-white uppercase tracking-tight mb-2 group-hover:text-blue-400 transition-colors line-clamp-1">{center.center_name}</h3>
+      
+      <div className="mt-auto pt-6 border-t border-white/5 flex items-center justify-between gap-4 relative z-10">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400">
+            <Users size={16} />
+          </div>
+          <div>
+            <p className="text-[10px] text-slate-500 font-extrabold uppercase leading-none">Members</p>
+            <p className="text-sm font-black text-white">{center.count}</p>
+          </div>
+        </div>
+        <div className="text-right">
+          <p className="text-[10px] text-slate-500 font-extrabold uppercase leading-none mb-1">Total Limit</p>
+          <p className="text-emerald-400 font-black text-lg font-mono">₹{center.total_amount?.toLocaleString()}</p>
+        </div>
+      </div>
+
+      {/* Hover indicator */}
+      <div className="absolute bottom-4 right-4 text-blue-500 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
+        <ChevronRight size={20} />
+      </div>
+    </button>
+  );
+}
+
+function LoadingCard() {
+  return (
+    <div className="glass-card p-6 rounded-3xl border border-white/5 animate-pulse overflow-hidden bg-slate-900/40">
+      <div className="flex justify-between items-start mb-6">
+        <div className="w-12 h-12 rounded-2xl bg-white/5"></div>
+        <div className="w-16 h-4 bg-white/5 rounded-full"></div>
+      </div>
+      <div className="h-6 bg-white/5 rounded-full w-3/4 mb-8"></div>
+      <div className="pt-6 border-t border-white/5 flex justify-between">
+        <div className="w-20 h-8 bg-white/5 rounded-lg"></div>
+        <div className="w-24 h-8 bg-white/5 rounded-lg"></div>
+      </div>
+    </div>
+  );
+}
 
 const SidebarItem = ({ icon: Icon, label, active = false, collapsed = false }) => (
   <button className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${active ? 'bg-blue-600/10 text-white shadow-sm ring-1 ring-blue-500/20' : 'text-slate-500 hover:bg-white/5 hover:text-slate-300'} whitespace-nowrap`}>
