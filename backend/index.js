@@ -171,7 +171,8 @@ app.post('/api/credit', async (req, res) => {
         disbursement_status: 'CREDITED',
         status: 'CREDITED', // Ensure main status also updates if needed
         credited_at: new Date().toISOString(),
-        amount_sanctioned: amountSanctioned
+        amount_sanctioned: amountSanctioned,
+        disbursed_by: staffId
       })
       .eq('id', loanId)
       .select();

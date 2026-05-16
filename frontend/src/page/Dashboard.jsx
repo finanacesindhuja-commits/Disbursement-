@@ -169,17 +169,22 @@ const Dashboard = () => {
           <SidebarItem 
             icon={Layers} 
             label="Dashboard" 
-            active={true} 
+            active={activeTab === 'queue'} 
+            onClick={() => setActiveTab('queue')}
             collapsed={!isSidebarOpen} 
           />
           <SidebarItem 
             icon={CheckCircle2} 
             label="Verifications" 
+            active={activeTab === 'verifications'}
+            onClick={() => alert("Verifications module coming soon")}
             collapsed={!isSidebarOpen} 
           />
           <SidebarItem 
             icon={HistoryIcon} 
             label="Log History" 
+            active={activeTab === 'history'}
+            onClick={() => setActiveTab('history')}
             collapsed={!isSidebarOpen} 
           />
         </nav>
@@ -551,8 +556,11 @@ function LoadingCard() {
   );
 }
 
-const SidebarItem = ({ icon: Icon, label, active = false, collapsed = false }) => (
-  <button className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${active ? 'bg-blue-600/10 text-white shadow-sm ring-1 ring-blue-500/20' : 'text-slate-500 hover:bg-white/5 hover:text-slate-300'} whitespace-nowrap`}>
+const SidebarItem = ({ icon: Icon, label, active = false, collapsed = false, onClick }) => (
+  <button 
+    onClick={onClick}
+    className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${active ? 'bg-blue-600/10 text-white shadow-sm ring-1 ring-blue-500/20' : 'text-slate-500 hover:bg-white/5 hover:text-slate-300'} whitespace-nowrap`}
+  >
     <Icon size={20} className="shrink-0" />
     {!collapsed && <span className="font-semibold">{label}</span>}
     {!collapsed && active && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-500 shadow-lg shadow-blue-500/50"></div>}
