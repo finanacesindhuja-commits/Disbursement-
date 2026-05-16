@@ -111,8 +111,8 @@ app.get('/api/queue', async (req, res) => {
     }
 
     const { data, error } = await query
-      .order('amount_sanctioned', { ascending: false })
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .order('amount_sanctioned', { ascending: false });
 
     if (error) {
       console.error('❌ Supabase Queue Error:', error);
@@ -146,8 +146,8 @@ app.get('/api/history', async (req, res) => {
     }
 
     const { data, error } = await query
-      .order('amount_sanctioned', { ascending: false })
       .order('credited_at', { ascending: false })
+      .order('amount_sanctioned', { ascending: false })
       .limit(50);
 
     if (error) {

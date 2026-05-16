@@ -144,10 +144,16 @@ const Dashboard = () => {
     acc[centerId].count += 1;
     acc[centerId].total_amount += (item.amount_sanctioned || 0);
     acc[centerId].members.push(item);
+    
+    const itemDate = new Date(item.credited_at || item.created_at);
+    if (!acc[centerId].latestDate || itemDate > acc[centerId].latestDate) {
+      acc[centerId].latestDate = itemDate;
+    }
+    
     return acc;
   }, {});
 
-  const centers = Object.values(groupedCenters).sort((a, b) => b.total_amount - a.total_amount);
+  const centers = Object.values(groupedCenters).sort((a, b) => b.latestDate - a.latestDate);
   const filteredMembers = selectedCenter 
     ? data.filter(item => item.center_id === selectedCenter)
     : [];
