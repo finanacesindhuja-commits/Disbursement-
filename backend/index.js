@@ -110,7 +110,9 @@ app.get('/api/queue', async (req, res) => {
       query = query.or(`disbursement_status.eq.PENDING,disbursement_status.is.null`);
     }
 
-    const { data, error } = await query.order('created_at', { ascending: true });
+    const { data, error } = await query
+      .order('amount_sanctioned', { ascending: false })
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error('❌ Supabase Queue Error:', error);
@@ -143,7 +145,10 @@ app.get('/api/history', async (req, res) => {
       query = query.or(`member_name.ilike.%${search}%,center_name.ilike.%${search}%`);
     }
 
-    const { data, error } = await query.order('credited_at', { ascending: false }).limit(50);
+    const { data, error } = await query
+      .order('amount_sanctioned', { ascending: false })
+      .order('credited_at', { ascending: false })
+      .limit(50);
 
     if (error) {
       console.error('❌ Supabase History Error:', error);

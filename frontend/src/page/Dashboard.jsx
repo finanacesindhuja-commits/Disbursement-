@@ -147,7 +147,7 @@ const Dashboard = () => {
     return acc;
   }, {});
 
-  const centers = Object.values(groupedCenters);
+  const centers = Object.values(groupedCenters).sort((a, b) => b.total_amount - a.total_amount);
   const filteredMembers = selectedCenter 
     ? data.filter(item => item.center_id === selectedCenter)
     : [];
