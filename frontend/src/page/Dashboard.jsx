@@ -358,14 +358,15 @@ const Dashboard = () => {
                               return (
                                 <React.Fragment key={item.id}>
                                   {showSeparator && (
-                                    <tr className="bg-slate-900/40">
-                                      <td colSpan="4" className="px-6 py-3">
+                                    <tr>
+                                      <td colSpan="4" className="px-6 py-10">
                                         <div className="flex items-center gap-4">
-                                          <div className="flex items-center gap-2 px-3 py-1 bg-slate-800 rounded-lg border border-white/5">
-                                            <Calendar size={12} className="text-blue-400" />
-                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{itemDate}</span>
+                                          <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-white/10 to-white/10"></div>
+                                          <div className="flex items-center gap-2 px-6 py-2 bg-slate-900/80 backdrop-blur-md border border-white/10 rounded-full shadow-2xl">
+                                            <Calendar size={14} className="text-blue-500" />
+                                            <span className="text-[10px] font-black text-white uppercase tracking-[0.2em]">{itemDate}</span>
                                           </div>
-                                          <div className="h-[1px] flex-1 bg-gradient-to-r from-white/10 to-transparent"></div>
+                                          <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent via-white/10 to-white/10"></div>
                                         </div>
                                       </td>
                                     </tr>
