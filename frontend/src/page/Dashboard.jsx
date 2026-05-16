@@ -88,10 +88,36 @@ const Dashboard = () => {
     setSelectedCenter(null);
   };
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     localStorage.removeItem('user');
     navigate('/login');
-  };
+  }, [navigate]);
+
+  // Auto-logout logic for inactivity
+  useEffect(() => {
+    if (!user) return;
+
+    let timeoutId;
+    const INACTIVITY_LIMIT = 30 * 60 * 1000; // 30 minutes
+
+    const resetTimer = () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        handleLogout();
+      }, INACTIVITY_LIMIT);
+    };
+
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+    const handleActivity = () => resetTimer();
+
+    events.forEach(event => document.addEventListener(event, handleActivity));
+    resetTimer();
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      events.forEach(event => document.removeEventListener(event, handleActivity));
+    };
+  }, [user, handleLogout]);
 
   const openConfirmModal = (loan) => {
     setSelectedLoan(loan);
