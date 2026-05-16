@@ -566,6 +566,12 @@ function CenterCard({ center, onClick }) {
           </div>
         </div>
         <div className="text-right">
+          <div className="mb-3">
+            <p className="text-[10px] text-slate-500 font-extrabold uppercase leading-none mb-1">Latest Update</p>
+            <p className="text-blue-400 font-bold text-[10px]">
+              {new Date(center.latestDate).toLocaleDateString('en-IN')} | {new Date(center.latestDate).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+            </p>
+          </div>
           <p className="text-[10px] text-slate-500 font-extrabold uppercase leading-none mb-1">Total Limit</p>
           <p className="text-emerald-400 font-black text-lg font-mono">₹{center.total_amount?.toLocaleString()}</p>
         </div>
