@@ -300,13 +300,39 @@ const Dashboard = () => {
                     <p className="text-sm">Try searching for a different name or ID</p>
                   </div>
                 ) : (
-                  centers.map((center) => (
-                    <CenterCard
-                      key={center.center_id}
-                      center={center}
-                      onClick={() => setSelectedCenter(center.center_id)}
-                    />
-                  ))
+                  (() => {
+                    let lastDate = null;
+                    return centers.map((center) => {
+                      const centerDate = new Date(center.latestDate).toLocaleDateString('en-IN', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric'
+                      });
+                      const showSeparator = centerDate !== lastDate;
+                      lastDate = centerDate;
+                      
+                      return (
+                        <React.Fragment key={center.center_id}>
+                          {showSeparator && (
+                            <div className="col-span-full py-4 mt-6 first:mt-0">
+                              <div className="flex items-center gap-4">
+                                <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-white/10 to-white/10"></div>
+                                <div className="flex items-center gap-2 px-6 py-2 bg-slate-900/80 backdrop-blur-md border border-white/10 rounded-full shadow-2xl">
+                                  <Calendar size={14} className="text-blue-500" />
+                                  <span className="text-[10px] font-black text-white uppercase tracking-[0.2em]">{centerDate}</span>
+                                </div>
+                                <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent via-white/10 to-white/10"></div>
+                              </div>
+                            </div>
+                          )}
+                          <CenterCard 
+                            center={center} 
+                            onClick={() => setSelectedCenter(center.center_id)} 
+                          />
+                        </React.Fragment>
+                      );
+                    });
+                  })()
                 )}
               </div>
             ) : (
