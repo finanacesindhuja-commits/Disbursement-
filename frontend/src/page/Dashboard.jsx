@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
+import {
   LayoutDashboard,
-  LogOut, 
-  Clock, 
-  CheckCircle2, 
-  Search, 
+  LogOut,
+  Clock,
+  CheckCircle2,
+  Search,
   Bell,
   Menu,
   X,
@@ -33,7 +33,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [selectedCenter, setSelectedCenter] = useState(null); // Drill-down state
-  
+
   // Modal state
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedLoan, setSelectedLoan] = useState(null);
@@ -106,13 +106,13 @@ const Dashboard = () => {
       const res = await fetch(`${apiUrl}/api/credit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          loanId: selectedLoan.id, 
+        body: JSON.stringify({
+          loanId: selectedLoan.id,
           staffId: user.staffId,
           amountSanctioned: selectedLoan.amount_sanctioned
         })
       });
-      
+
       if (res.ok) {
         setShowConfirmModal(false);
         fetchData();
@@ -144,17 +144,17 @@ const Dashboard = () => {
     acc[centerId].count += 1;
     acc[centerId].total_amount += (item.amount_sanctioned || 0);
     acc[centerId].members.push(item);
-    
+
     const itemDate = new Date(item.credited_at || item.created_at);
     if (!acc[centerId].latestDate || itemDate > acc[centerId].latestDate) {
       acc[centerId].latestDate = itemDate;
     }
-    
+
     return acc;
   }, {});
 
   const centers = Object.values(groupedCenters).sort((a, b) => b.latestDate - a.latestDate);
-  const filteredMembers = selectedCenter 
+  const filteredMembers = selectedCenter
     ? data.filter(item => item.center_id === selectedCenter)
     : [];
 
@@ -172,31 +172,31 @@ const Dashboard = () => {
         </div>
 
         <nav className="flex-1 px-4 py-6 space-y-2 overflow-hidden">
-          <SidebarItem 
-            icon={Layers} 
-            label="Dashboard" 
-            active={activeTab === 'queue'} 
+          <SidebarItem
+            icon={Layers}
+            label="Dashboard"
+            active={activeTab === 'queue'}
             onClick={() => setActiveTab('queue')}
-            collapsed={!isSidebarOpen} 
+            collapsed={!isSidebarOpen}
           />
-          <SidebarItem 
-            icon={CheckCircle2} 
-            label="Verifications" 
+          <SidebarItem
+            icon={CheckCircle2}
+            label="Verifications"
             active={activeTab === 'verifications'}
             onClick={() => alert("Verifications module coming soon")}
-            collapsed={!isSidebarOpen} 
+            collapsed={!isSidebarOpen}
           />
-          <SidebarItem 
-            icon={HistoryIcon} 
-            label="Log History" 
+          <SidebarItem
+            icon={HistoryIcon}
+            label="Log History"
             active={activeTab === 'history'}
             onClick={() => setActiveTab('history')}
-            collapsed={!isSidebarOpen} 
+            collapsed={!isSidebarOpen}
           />
         </nav>
 
         <div className="p-4 mt-auto overflow-hidden">
-          <button 
+          <button
             onClick={handleLogout}
             className="w-full flex items-center gap-3 p-3 rounded-xl text-red-400 hover:bg-red-500/10 transition-colors whitespace-nowrap"
           >
@@ -211,7 +211,7 @@ const Dashboard = () => {
         {/* Header */}
         <header className="sticky top-0 z-30 bg-[#0a0f1d]/80 backdrop-blur-md border-b border-white/5 px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <button 
+            <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
               className="p-2 hover:bg-white/5 rounded-lg text-slate-400"
             >
@@ -250,13 +250,13 @@ const Dashboard = () => {
 
             {/* Tabs */}
             <div className="bg-slate-900/60 p-1 rounded-xl flex border border-white/5">
-              <button 
+              <button
                 onClick={() => setActiveTab('queue')}
                 className={`px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${activeTab === 'queue' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'text-slate-500 hover:text-slate-300'}`}
               >
                 <Clock size={16} /> Pending Queue
               </button>
-              <button 
+              <button
                 onClick={() => setActiveTab('history')}
                 className={`px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${activeTab === 'history' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'text-slate-500 hover:text-slate-300'}`}
               >
@@ -276,8 +276,8 @@ const Dashboard = () => {
           {/* Search Bar */}
           <div className="relative group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-400 transition-colors" size={20} />
-            <input 
-              type="text" 
+            <input
+              type="text"
               placeholder="Search by Member Name, Center, or ID..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -301,10 +301,10 @@ const Dashboard = () => {
                   </div>
                 ) : (
                   centers.map((center) => (
-                    <CenterCard 
-                      key={center.center_id} 
-                      center={center} 
-                      onClick={() => setSelectedCenter(center.center_id)} 
+                    <CenterCard
+                      key={center.center_id}
+                      center={center}
+                      onClick={() => setSelectedCenter(center.center_id)}
                     />
                   ))
                 )}
@@ -312,7 +312,7 @@ const Dashboard = () => {
             ) : (
               <div className="space-y-6 animate-fade-in">
                 <div className="flex items-center justify-between">
-                  <button 
+                  <button
                     onClick={handleBackToCenters}
                     className="flex items-center gap-2 text-slate-400 hover:text-white transition-all hover:-translate-x-1 group"
                   >
@@ -321,7 +321,7 @@ const Dashboard = () => {
                     </div>
                     <span className="text-sm font-bold uppercase tracking-wider">Back to Centers</span>
                   </button>
-                  
+
                   <div className="flex items-center gap-3 px-4 py-2 bg-blue-600/10 rounded-xl border border-blue-500/20">
                     <Building2 size={16} className="text-blue-400" />
                     <span className="text-white font-bold">{groupedCenters[selectedCenter]?.center_name}</span>
@@ -374,9 +374,9 @@ const Dashboard = () => {
                                     <td className="px-6 py-4">
                                       <div className="flex items-center gap-4">
                                         {item.passbook_image_url ? (
-                                          <img 
-                                            src={item.passbook_image_url} 
-                                            alt="Passbook" 
+                                          <img
+                                            src={item.passbook_image_url}
+                                            alt="Passbook"
                                             className="w-12 h-12 rounded-lg object-cover cursor-zoom-in border border-white/10 hover:border-blue-500/50 transition-all shadow-lg"
                                             onClick={() => setLightboxImage(item.passbook_image_url)}
                                           />
@@ -404,7 +404,7 @@ const Dashboard = () => {
                                             SANCTIONED
                                           </span>
                                           <p className="text-[10px] text-slate-500 font-normal ml-1">
-                                            {new Date(item.created_at).toLocaleDateString('en-IN')} {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            {new Date(item.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' })} | {new Date(item.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}
                                           </p>
                                         </div>
                                       ) : (
@@ -413,14 +413,14 @@ const Dashboard = () => {
                                             CREDITED
                                           </span>
                                           <p className="text-[10px] text-slate-500 font-normal ml-1">
-                                            {new Date(item.credited_at).toLocaleDateString('en-IN')} {new Date(item.credited_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            {new Date(item.credited_at).toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' })} | {new Date(item.credited_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}
                                           </p>
                                         </div>
                                       )}
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                       {activeTab === 'queue' ? (
-                                        <button 
+                                        <button
                                           onClick={() => openConfirmModal(item)}
                                           className="btn-primary px-4 py-2 text-xs flex items-center gap-2 group-hover:px-6 transition-all"
                                         >
@@ -451,7 +451,7 @@ const Dashboard = () => {
       {/* Confirmation Modal */}
       {showConfirmModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div 
+          <div
             className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity"
             onClick={() => !isProcessing && setShowConfirmModal(false)}
           ></div>
@@ -470,9 +470,9 @@ const Dashboard = () => {
                 <p className="text-[10px] text-slate-500 uppercase tracking-widest font-black mb-2 text-left ml-1">Member Passbook Verification</p>
                 {selectedLoan?.passbook_image_url ? (
                   <div className="relative rounded-2xl overflow-hidden border border-white/10 aspect-video bg-slate-950">
-                    <img 
-                      src={selectedLoan.passbook_image_url} 
-                      alt="Full Passbook" 
+                    <img
+                      src={selectedLoan.passbook_image_url}
+                      alt="Full Passbook"
                       className="w-full h-full object-contain cursor-zoom-in hover:scale-105 transition-transform duration-500"
                       onClick={() => setLightboxImage(selectedLoan.passbook_image_url)}
                     />
@@ -490,14 +490,14 @@ const Dashboard = () => {
               </div>
 
               <div className="w-full space-y-3">
-                <button 
+                <button
                   disabled={isProcessing}
                   onClick={handleCredit}
                   className="w-full btn-primary py-4 flex items-center justify-center gap-2"
                 >
                   {isProcessing ? <Loader2 className="animate-spin" /> : "Authorize & Mark CredITED"}
                 </button>
-                <button 
+                <button
                   disabled={isProcessing}
                   onClick={() => setShowConfirmModal(false)}
                   className="w-full py-4 text-sm font-semibold text-slate-500 hover:text-white transition-colors"
@@ -512,19 +512,19 @@ const Dashboard = () => {
 
       {/* Lightbox */}
       {lightboxImage && (
-        <div 
+        <div
           className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl flex items-center justify-center p-4 lg:p-12 animate-fade-in"
           onClick={() => setLightboxImage(null)}
         >
-          <button 
+          <button
             className="absolute top-8 right-8 text-white/50 hover:text-white transition-colors"
             onClick={() => setLightboxImage(null)}
           >
             <X size={32} />
           </button>
-          <img 
-            src={lightboxImage} 
-            alt="Full View" 
+          <img
+            src={lightboxImage}
+            alt="Full View"
             className="max-w-full max-h-full object-contain rounded-xl shadow-2xl animate-zoom-in"
             onClick={(e) => e.stopPropagation()}
           />
@@ -536,13 +536,13 @@ const Dashboard = () => {
 
 function CenterCard({ center, onClick }) {
   return (
-    <button 
+    <button
       onClick={onClick}
       className="glass-card p-6 rounded-3xl border border-white/5 group hover:border-blue-500/50 transition-all text-left flex flex-col h-full relative overflow-hidden"
     >
       {/* Decorative background element */}
       <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-blue-500/10 transition-colors"></div>
-      
+
       <div className="flex justify-between items-start mb-6 relative z-10">
         <div className="w-12 h-12 rounded-2xl bg-slate-800 flex items-center justify-center text-blue-400 group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300 shadow-xl">
           <Building2 size={24} />
@@ -554,7 +554,7 @@ function CenterCard({ center, onClick }) {
       </div>
 
       <h3 className="text-xl font-black text-white uppercase tracking-tight mb-2 group-hover:text-blue-400 transition-colors line-clamp-1">{center.center_name}</h3>
-      
+
       <div className="mt-auto pt-6 border-t border-white/5 flex items-center justify-between gap-4 relative z-10">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400">
@@ -596,7 +596,7 @@ function LoadingCard() {
 }
 
 const SidebarItem = ({ icon: Icon, label, active = false, collapsed = false, onClick }) => (
-  <button 
+  <button
     onClick={onClick}
     className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${active ? 'bg-blue-600/10 text-white shadow-sm ring-1 ring-blue-500/20' : 'text-slate-500 hover:bg-white/5 hover:text-slate-300'} whitespace-nowrap`}
   >
