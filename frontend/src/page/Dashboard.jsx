@@ -341,70 +341,98 @@ const Dashboard = () => {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-white/5">
-                        {filteredMembers.length === 0 ? (
-                          <EmptyRow message="No members found in this center." />
-                        ) : (
-                          filteredMembers.map((item) => (
-                            <tr key={item.id} className="group hover:bg-white/5 transition-all">
-                              <td className="px-6 py-4">
-                                <div className="flex items-center gap-4">
-                                  {item.passbook_image_url ? (
-                                    <img 
-                                      src={item.passbook_image_url} 
-                                      alt="Passbook" 
-                                      className="w-12 h-12 rounded-lg object-cover cursor-zoom-in border border-white/10 hover:border-blue-500/50 transition-all shadow-lg"
-                                      onClick={() => setLightboxImage(item.passbook_image_url)}
-                                    />
-                                  ) : (
-                                    <div className="w-12 h-12 rounded-lg bg-slate-800 flex items-center justify-center text-slate-600 border border-dashed border-slate-700">
-                                      <CreditCard size={20} />
-                                    </div>
+                        {(() => {
+                          let lastDate = null;
+                          return filteredMembers.length === 0 ? (
+                            <EmptyRow message="No members found in this center." />
+                          ) : (
+                            filteredMembers.map((item) => {
+                              const itemDate = new Date(activeTab === 'queue' ? item.created_at : item.credited_at).toLocaleDateString('en-IN', {
+                                day: '2-digit',
+                                month: 'short',
+                                year: 'numeric'
+                              });
+                              const showSeparator = itemDate !== lastDate;
+                              lastDate = itemDate;
+
+                              return (
+                                <React.Fragment key={item.id}>
+                                  {showSeparator && (
+                                    <tr className="bg-slate-900/40">
+                                      <td colSpan="4" className="px-6 py-3">
+                                        <div className="flex items-center gap-4">
+                                          <div className="flex items-center gap-2 px-3 py-1 bg-slate-800 rounded-lg border border-white/5">
+                                            <Calendar size={12} className="text-blue-400" />
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{itemDate}</span>
+                                          </div>
+                                          <div className="h-[1px] flex-1 bg-gradient-to-r from-white/10 to-transparent"></div>
+                                        </div>
+                                      </td>
+                                    </tr>
                                   )}
-                                  <div>
-                                    <p className="text-white font-black text-base uppercase tracking-tight leading-none mb-1">{item.member_name}</p>
-                                    <p className="text-[10px] text-emerald-500 font-bold tracking-widest uppercase">LN Number: {item.members?.member_no || 'N/A'}</p>
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="px-6 py-4">
-                                <div className="flex items-center gap-1.5">
-                                  <Banknote size={14} className="text-emerald-500" />
-                                  <span className="text-white font-black text-lg font-mono">₹{item.amount_sanctioned?.toLocaleString()}</span>
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 text-xs font-bold">
-                                {activeTab === 'queue' ? (
-                                  <span className="px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20 shadow-sm animate-pulse-subtle">
-                                    SANCTIONED
-                                  </span>
-                                ) : (
-                                  <div className="space-y-1">
-                                    <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-sm">
-                                      CREDITED
-                                    </span>
-                                    <p className="text-[10px] text-slate-500 font-normal ml-1">
-                                      {new Date(item.credited_at).toLocaleDateString()}
-                                    </p>
-                                  </div>
-                                )}
-                              </td>
-                              <td className="px-6 py-4 text-right">
-                                {activeTab === 'queue' ? (
-                                  <button 
-                                    onClick={() => openConfirmModal(item)}
-                                    className="btn-primary px-4 py-2 text-xs flex items-center gap-2 group-hover:px-6 transition-all"
-                                  >
-                                    Confirm Credit <ChevronRight size={14} />
-                                  </button>
-                                ) : (
-                                  <button className="p-2 hover:bg-white/5 rounded-lg text-slate-500 transition-colors">
-                                    <MoreVertical size={18} />
-                                  </button>
-                                )}
-                              </td>
-                            </tr>
-                          ))
-                        )}
+                                  <tr className="group hover:bg-white/5 transition-all">
+                                    <td className="px-6 py-4">
+                                      <div className="flex items-center gap-4">
+                                        {item.passbook_image_url ? (
+                                          <img 
+                                            src={item.passbook_image_url} 
+                                            alt="Passbook" 
+                                            className="w-12 h-12 rounded-lg object-cover cursor-zoom-in border border-white/10 hover:border-blue-500/50 transition-all shadow-lg"
+                                            onClick={() => setLightboxImage(item.passbook_image_url)}
+                                          />
+                                        ) : (
+                                          <div className="w-12 h-12 rounded-lg bg-slate-800 flex items-center justify-center text-slate-600 border border-dashed border-slate-700">
+                                            <CreditCard size={20} />
+                                          </div>
+                                        )}
+                                        <div>
+                                          <p className="text-white font-black text-base uppercase tracking-tight leading-none mb-1">{item.member_name}</p>
+                                          <p className="text-[10px] text-emerald-500 font-bold tracking-widest uppercase">LN Number: {item.members?.member_no || 'N/A'}</p>
+                                        </div>
+                                      </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                      <div className="flex items-center gap-1.5">
+                                        <Banknote size={14} className="text-emerald-500" />
+                                        <span className="text-white font-black text-lg font-mono">₹{item.amount_sanctioned?.toLocaleString()}</span>
+                                      </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-xs font-bold">
+                                      {activeTab === 'queue' ? (
+                                        <span className="px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20 shadow-sm animate-pulse-subtle">
+                                          SANCTIONED
+                                        </span>
+                                      ) : (
+                                        <div className="space-y-1">
+                                          <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-sm">
+                                            CREDITED
+                                          </span>
+                                          <p className="text-[10px] text-slate-500 font-normal ml-1">
+                                            {new Date(item.credited_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                          </p>
+                                        </div>
+                                      )}
+                                    </td>
+                                    <td className="px-6 py-4 text-right">
+                                      {activeTab === 'queue' ? (
+                                        <button 
+                                          onClick={() => openConfirmModal(item)}
+                                          className="btn-primary px-4 py-2 text-xs flex items-center gap-2 group-hover:px-6 transition-all"
+                                        >
+                                          Confirm Credit <ChevronRight size={14} />
+                                        </button>
+                                      ) : (
+                                        <button className="p-2 hover:bg-white/5 rounded-lg text-slate-500 transition-colors">
+                                          <MoreVertical size={18} />
+                                        </button>
+                                      )}
+                                    </td>
+                                  </tr>
+                                </React.Fragment>
+                              );
+                            })
+                          );
+                        })()}
                       </tbody>
                     </table>
                   </div>
