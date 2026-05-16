@@ -399,16 +399,21 @@ const Dashboard = () => {
                                     </td>
                                     <td className="px-6 py-4 text-xs font-bold">
                                       {activeTab === 'queue' ? (
-                                        <span className="px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20 shadow-sm animate-pulse-subtle">
-                                          SANCTIONED
-                                        </span>
+                                        <div className="space-y-1">
+                                          <span className="px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20 shadow-sm animate-pulse-subtle">
+                                            SANCTIONED
+                                          </span>
+                                          <p className="text-[10px] text-slate-500 font-normal ml-1">
+                                            {new Date(item.created_at).toLocaleDateString('en-IN')} {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                          </p>
+                                        </div>
                                       ) : (
                                         <div className="space-y-1">
                                           <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-sm">
                                             CREDITED
                                           </span>
                                           <p className="text-[10px] text-slate-500 font-normal ml-1">
-                                            {new Date(item.credited_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            {new Date(item.credited_at).toLocaleDateString('en-IN')} {new Date(item.credited_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                           </p>
                                         </div>
                                       )}
