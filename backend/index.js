@@ -1,10 +1,31 @@
 const express = require('express');
+const compression = require('compression');
+const NodeCache = require('node-cache');
 const cors = require('cors');
 const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
 
 const app = express();
+
+const cache = new NodeCache({ stdTTL: 15 });
+const flushCache = () => cache.flushAll();
+const cacheMiddleware = (duration = 15) => (req, res, next) => {
+  if (req.method !== 'GET') return next();
+  const key = req.originalUrl;
+  const cachedResponse = cache.get(key);
+  if (cachedResponse) return res.json(cachedResponse);
+  res.sendResponse = res.json;
+  res.json = (body) => {
+    if (res.statusCode >= 200 && res.statusCode < 300) {
+      cache.set(key, body, duration);
+    }
+    res.sendResponse(body);
+  };
+  next();
+};
+
+app.use(compression());
 const PORT = process.env.PORT || 5008;
 
 // Log all incoming requests to help debug web connectivity
