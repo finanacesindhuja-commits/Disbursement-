@@ -60,8 +60,8 @@ const Dashboard = () => {
     }
   }, [navigate]);
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
+  const fetchData = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const endpoint = activeTab === 'queue' ? 'queue' : 'history';
       const res = await fetch(`${apiUrl}/api/${endpoint}?search=${encodeURIComponent(searchQuery)}`);
@@ -70,13 +70,22 @@ const Dashboard = () => {
     } catch (err) {
       console.error('Fetch error:', err);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [activeTab, searchQuery]);
 
   useEffect(() => {
     if (user) fetchData();
   }, [fetchData, user]);
+
+  // Auto-refresh every 10 seconds
+  useEffect(() => {
+    if (!user) return;
+    const interval = setInterval(() => {
+      fetchData(true);
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [user, fetchData]);
 
   // Reset drill-down when tab changes
   useEffect(() => {
@@ -250,6 +259,10 @@ const Dashboard = () => {
           </div>
 
           <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full hidden sm:flex">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="text-xs font-bold text-emerald-500 tracking-wider">LIVE</span>
+            </div>
             <div className="hidden sm:flex items-center gap-3 px-4 py-2 bg-slate-900/50 rounded-xl border border-white/5">
               <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-blue-400">
                 <UserIcon size={16} />
