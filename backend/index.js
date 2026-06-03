@@ -25,6 +25,19 @@ const cacheMiddleware = (duration = 15) => (req, res, next) => {
   next();
 };
 
+const activePromises = new Map();
+
+async function coalesceRequest(key, fetchFunction) {
+  if (activePromises.has(key)) {
+    return activePromises.get(key);
+  }
+  const promise = fetchFunction().finally(() => {
+    activePromises.delete(key);
+  });
+  activePromises.set(key, promise);
+  return promise;
+}
+
 app.use(compression());
 const PORT = process.env.PORT || 5008;
 
@@ -113,77 +126,77 @@ app.post('/api/login', async (req, res) => {
 // --- DISBURSEMENT WORKFLOW ENDPOINTS ---
 
 // 1. Fetch loans that are SANCTIONED but NOT YET CREDITED (Queue)
-app.get('/api/queue', async (req, res) => {
+app.get('/api/queue', cacheMiddleware(10), async (req, res) => {
   try {
     const { search } = req.query;
     console.log(`🔍 Fetching Queue... Search: "${search || ''}"`);
+    
+    const cacheKey = `/api/queue?search=${search || ''}`;
 
-    let query = supabase
-      .from('loans')
-      .select('*, members(member_no)')
-      .ilike('status', 'SANCTIONED');
+    const data = await coalesceRequest(cacheKey, async () => {
+      let query = supabase
+        .from('loans')
+        .select('*, members(member_no)')
+        .ilike('status', 'SANCTIONED');
 
-    // Combine filters to ensure valid PostgREST query
-    if (search) {
-      query = query.or(`disbursement_status.eq.PENDING,disbursement_status.is.null`);
-      query = query.or(`member_name.ilike.%${search}%,center_name.ilike.%${search}%`);
-    } else {
-      query = query.or(`disbursement_status.eq.PENDING,disbursement_status.is.null`);
-    }
+      // Combine filters to ensure valid PostgREST query
+      if (search) {
+        query = query.or(`disbursement_status.eq.PENDING,disbursement_status.is.null`);
+        query = query.or(`member_name.ilike.%${search}%,center_name.ilike.%${search}%`);
+      } else {
+        query = query.or(`disbursement_status.eq.PENDING,disbursement_status.is.null`);
+      }
 
-    const { data, error } = await query
-      .order('created_at', { ascending: false })
-      .order('amount_sanctioned', { ascending: false });
+      const { data, error } = await query
+        .order('created_at', { ascending: false })
+        .order('amount_sanctioned', { ascending: false });
 
-    if (error) {
-      console.error('❌ Supabase Queue Error:', error);
-      return res.status(500).json({ 
-        error: 'Database query failed', 
-        details: error.message,
-        hint: error.hint 
-      });
-    }
+      if (error) {
+        throw error;
+      }
+      return data || [];
+    });
 
-    res.json(data || []);
+    res.json(data);
   } catch (err) {
     console.error('💥 API 500 Error (Queue):', err);
-    res.status(500).json({ error: 'Internal Server Error', message: err.message });
+    res.status(500).json({ error: 'Internal Server Error', message: err.message, hint: err.hint });
   }
 });
 
 // 2. Fetch loans that are already CREDITED (History)
-app.get('/api/history', async (req, res) => {
+app.get('/api/history', cacheMiddleware(10), async (req, res) => {
   try {
     const { search } = req.query;
     console.log(`🔍 Fetching History... Search: "${search || ''}"`);
 
-    let query = supabase
-      .from('loans')
-      .select('*, members(member_no)')
-      .ilike('disbursement_status', 'CREDITED');
+    const cacheKey = `/api/history?search=${search || ''}`;
 
-    if (search) {
-      query = query.or(`member_name.ilike.%${search}%,center_name.ilike.%${search}%`);
-    }
+    const data = await coalesceRequest(cacheKey, async () => {
+      let query = supabase
+        .from('loans')
+        .select('*, members(member_no)')
+        .ilike('disbursement_status', 'CREDITED');
 
-    const { data, error } = await query
-      .order('credited_at', { ascending: false })
-      .order('amount_sanctioned', { ascending: false })
-      .limit(50);
+      if (search) {
+        query = query.or(`member_name.ilike.%${search}%,center_name.ilike.%${search}%`);
+      }
 
-    if (error) {
-      console.error('❌ Supabase History Error:', error);
-      return res.status(500).json({ 
-        error: 'Database query failed', 
-        details: error.message,
-        hint: error.hint 
-      });
-    }
+      const { data, error } = await query
+        .order('credited_at', { ascending: false })
+        .order('amount_sanctioned', { ascending: false })
+        .limit(50);
 
-    res.json(data || []);
+      if (error) {
+        throw error;
+      }
+      return data || [];
+    });
+
+    res.json(data);
   } catch (err) {
     console.error('💥 API 500 Error (History):', err);
-    res.status(500).json({ error: 'Internal Server Error', message: err.message });
+    res.status(500).json({ error: 'Internal Server Error', message: err.message, hint: err.hint });
   }
 });
 
