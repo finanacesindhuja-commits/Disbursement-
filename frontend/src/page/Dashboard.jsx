@@ -150,7 +150,9 @@ const Dashboard = () => {
 
       if (res.ok) {
         setShowConfirmModal(false);
-        fetchData();
+        // Optimistically remove the item from the queue
+        setData(prevData => prevData.filter(item => item.id !== selectedLoan.id));
+        fetchData(true); // Silent fetch to avoid UI flicker
       } else {
         const err = await res.json();
         alert(err.error || "Failed to mark as credited.");
