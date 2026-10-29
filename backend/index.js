@@ -4,6 +4,7 @@ const NodeCache = require('node-cache');
 const cors = require('cors');
 const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 require('dotenv').config();
 
 const app = express();
@@ -48,11 +49,12 @@ app.use((req, res, next) => {
 });
 
 app.use(cors({
-  origin: true, // Allow all origins to fix "doesn't work on web" immediately
+  origin: true, // Allow all origins
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'X-Requested-With', 'Accept'],
   credentials: true
 }));
+app.options('*', cors());
 app.use(express.json({ limit: '50mb' }));
 // staticPath disabled for split deployment (Frontend on Vercel)
 // const staticPath = path.join(__dirname, '../frontend/dist');
@@ -220,6 +222,11 @@ app.post('/api/credit', async (req, res) => {
       console.error('❌ Credit Update Error:', error);
       throw error;
     }
+
+    // Immediately flush cache so queue and history have latest DB data
+    flushCache();
+    activePromises.clear();
+
     res.json({ message: 'Loan marked as CREDITED successfully', data: data[0] });
   } catch (err) {
     console.error('💥 API 500 Error (Credit):', err);

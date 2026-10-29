@@ -38,6 +38,8 @@ const Dashboard = () => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedLoan, setSelectedLoan] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [creditedIds, setCreditedIds] = useState(new Set());
+  const [spinningLoanIds, setSpinningLoanIds] = useState(new Set());
 
   // Lightbox state
   const [lightboxImage, setLightboxImage] = useState(null);
@@ -66,13 +68,22 @@ const Dashboard = () => {
       const endpoint = activeTab === 'queue' ? 'queue' : 'history';
       const res = await fetch(`${apiUrl}/api/${endpoint}?search=${encodeURIComponent(searchQuery)}`);
       const result = await res.json();
-      setData(result);
+      if (Array.isArray(result)) {
+        if (activeTab === 'queue') {
+          // Never re-display loans that have already been credited in this session
+          setData(result.filter(item => !creditedIds.has(item.id)));
+        } else {
+          setData(result);
+        }
+      } else {
+        setData([]);
+      }
     } catch (err) {
       console.error('Fetch error:', err);
     } finally {
       if (!silent) setLoading(false);
     }
-  }, [activeTab, searchQuery]);
+  }, [activeTab, searchQuery, creditedIds, apiUrl]);
 
   useEffect(() => {
     if (user) fetchData();
@@ -135,33 +146,62 @@ const Dashboard = () => {
 
   const handleCredit = async () => {
     if (!selectedLoan) return;
-    setIsProcessing(true);
+    const loanToCredit = selectedLoan;
+    const loanId = loanToCredit.id;
 
+    // 1. Close modal immediately so user doesn't wait
+    setShowConfirmModal(false);
+
+    // 2. Mark as spinning and add to permanent credited set
+    setSpinningLoanIds(prev => new Set(prev).add(loanId));
+    setCreditedIds(prev => new Set(prev).add(loanId));
+
+    // 3. Allow user to see the spin animation for 400ms, then remove from view
+    setTimeout(() => {
+      setData(prevData => prevData.filter(item => item.id !== loanId));
+      setSpinningLoanIds(prev => {
+        const next = new Set(prev);
+        next.delete(loanId);
+        return next;
+      });
+    }, 450);
+
+    // 4. Send credit update to server
     try {
       const res = await fetch(`${apiUrl}/api/credit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          loanId: selectedLoan.id,
+          loanId: loanId,
           staffId: user.staffId,
-          amountSanctioned: selectedLoan.amount_sanctioned
+          amountSanctioned: loanToCredit.amount_sanctioned
         })
       });
 
-      if (res.ok) {
-        setShowConfirmModal(false);
-        // Optimistically remove the item from the queue
-        setData(prevData => prevData.filter(item => item.id !== selectedLoan.id));
-        fetchData(true); // Silent fetch to avoid UI flicker
-      } else {
+      if (!res.ok) {
         const err = await res.json();
         alert(err.error || "Failed to mark as credited.");
+        // Rollback on error
+        setCreditedIds(prev => {
+          const next = new Set(prev);
+          next.delete(loanId);
+          return next;
+        });
+        fetchData(true);
+      } else {
+        // Backend cache is flushed, perform silent background sync
+        fetchData(true);
       }
     } catch (err) {
       console.error(err);
       alert("Network error. Please try again.");
+      setCreditedIds(prev => {
+        const next = new Set(prev);
+        next.delete(loanId);
+        return next;
+      });
+      fetchData(true);
     } finally {
-      setIsProcessing(false);
       setSelectedLoan(null);
     }
   };
@@ -438,7 +478,7 @@ const Dashboard = () => {
                                       </td>
                                     </tr>
                                   )}
-                                  <tr className="group hover:bg-white/5 transition-all">
+                                  <tr className={`group transition-all duration-300 ${spinningLoanIds.has(item.id) ? 'opacity-40 scale-[0.98] bg-emerald-500/10 pointer-events-none' : 'hover:bg-white/5'}`}>
                                     <td className="px-6 py-4">
                                       <div className="flex items-center gap-4">
                                         {item.passbook_image_url ? (
@@ -488,12 +528,18 @@ const Dashboard = () => {
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                       {activeTab === 'queue' ? (
-                                        <button
-                                          onClick={() => openConfirmModal(item)}
-                                          className="btn-primary px-4 py-2 text-xs flex items-center gap-2 group-hover:px-6 transition-all"
-                                        >
-                                          Confirm Credit <ChevronRight size={14} />
-                                        </button>
+                                        spinningLoanIds.has(item.id) ? (
+                                          <span className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-xl shadow-lg">
+                                            <Loader2 size={14} className="animate-spin text-emerald-400" /> Crediting...
+                                          </span>
+                                        ) : (
+                                          <button
+                                            onClick={() => openConfirmModal(item)}
+                                            className="btn-primary px-4 py-2 text-xs flex items-center gap-2 group-hover:px-6 transition-all"
+                                          >
+                                            Confirm Credit <ChevronRight size={14} />
+                                          </button>
+                                        )
                                       ) : (
                                         <button className="p-2 hover:bg-white/5 rounded-lg text-slate-500 transition-colors">
                                           <MoreVertical size={18} />
